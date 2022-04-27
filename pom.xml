@@ -4,6 +4,7 @@
     <groupId>eu.openvalue</groupId>
     <artifactId>javafx-canvas-plasma</artifactId>
     <version>1.0.0</version>
+    <inceptionYear>2021</inceptionYear>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -12,7 +13,7 @@
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <jreleaser-plugin.version>0.9.1</jreleaser-plugin.version>
+        <jreleaser-plugin.version>1.0.0</jreleaser-plugin.version>
         <application.main.class>eu.openvalue.PlasmaApp</application.main.class>
     </properties>
 
@@ -124,7 +125,7 @@
                                             <format>- {{contributorName}}</format>
                                         </contributors>
                                         <hide>
-                                            <categories>🔀 Merge</categories>
+                                            <categories>merge</categories>
                                             <contributors>GitHub,dependabot</contributors>
                                         </hide>
                                     </changelog>
