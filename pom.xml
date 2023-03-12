@@ -8,13 +8,15 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javafx.version>17.0.1</javafx.version>
+        <java.version>17</java.version>
+        <javafx.version>${java.version}.0.1</javafx.version>
         <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
-        <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <jreleaser-plugin.version>1.0.0</jreleaser-plugin.version>
-        <application.main.class>eu.openvalue.PlasmaApp</application.main.class>
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <jreleaser-plugin.version>1.5.1</jreleaser-plugin.version>
+        <application.main.module>eu.openvalue</application.main.module>
+        <application.main.class>${application.main.module}.PlasmaApp</application.main.class>
     </properties>
 
     <dependencies>
@@ -36,7 +38,7 @@
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <version>1.7.0</version>
+                <version>1.7.1</version>
             </extension>
         </extensions>
 
@@ -51,16 +53,24 @@
                             <environment>
                                 <properties>
                                     <jdkFilePrefix>zulu17.30.15-ca-jdk17.0.1</jdkFilePrefix>
+                                    <jpackageDir>out/jreleaser/assemble/plasmafx-installer/jpackage</jpackageDir>
                                 </properties>
                             </environment>
+                            <project>
+                                <description>JavaFX Plasma sample</description>
+                                <copyright>2021 OpenValue</copyright>
+                            </project>
                             <assemble>
                                 <jlink>
-                                    <plasmafx>
+                                    <plasmafx-jlink>
                                         <active>ALWAYS</active>
                                         <java>
+                                            <version>${java.version}</version>
                                             <mainClass>${application.main.class}</mainClass>
+                                            <mainModule>${application.main.module}</mainModule>
                                         </java>
-                                        <imageName>{{distributionName}}-{{projectVersion}}</imageName>
+                                        <imageName>plasmafx-{{projectVersion}}</imageName>
+                                        <executable>plasmafx</executable>
                                         <targetJdks>
                                             <targetJdk>
                                                 <path>
@@ -81,13 +91,11 @@
                                                 <platform>windows-x86_64</platform>
                                             </targetJdk>
                                         </targetJdks>
-                                        <!--copyJars>false</copyJars-->
-                                        <!--moduleName>eu.openvalue</moduleName-->
                                         <additionalModuleNames>
                                             javafx.base,javafx.graphics,javafx.controls,javafx.swing
                                         </additionalModuleNames>
                                         <jdeps>
-                                            <multiRelease>17</multiRelease>
+                                            <multiRelease>${java.version}</multiRelease>
                                             <ignoreMissingDeps>true</ignoreMissingDeps>
                                         </jdeps>
                                         <mainJar>
@@ -99,11 +107,11 @@
                                                 </pattern>
                                             </jar>
                                             <jar>
-                                                <pattern>${project.build.directory}/repositories/mac/*.jar</pattern>
+                                                <pattern>${project.build.directory}/repositories/osx/*.jar</pattern>
                                                 <platform>osx-x86_64</platform>
                                             </jar>
                                             <jar>
-                                                <pattern>${project.build.directory}/repositories/win/*.jar</pattern>
+                                                <pattern>${project.build.directory}/repositories/windows/*.jar</pattern>
                                                 <platform>windows-x86_64</platform>
                                             </jar>
                                             <jar>
@@ -111,8 +119,34 @@
                                                 <platform>linux-x86_64</platform>
                                             </jar>
                                         </jars>
-                                    </plasmafx>
+                                    </plasmafx-jlink>
                                 </jlink>
+                                <jpackage>
+                                    <plasmafx-installer>
+                                        <active>ALWAYS</active>
+                                        <jlink>plasmafx-jlink</jlink>
+                                        <attachPlatform>true</attachPlatform>
+                                        <exported>false</exported>
+                                        <applicationPackage>
+                                            <appName>plasmafx</appName>
+                                            <appVersion>{{projectVersionNumber}}</appVersion>
+                                            <vendor>JReleaser</vendor>
+                                        </applicationPackage>
+                                        <osx>
+                                            <types>pkg,dmg</types>
+                                            <appName>PlasmaFX</appName>
+                                            <packageName>PlasmaFX</packageName>
+                                            <packageIdentifier>${application.main.module}.plasmafx</packageIdentifier>
+                                        </osx>
+                                        <linux>
+                                            <types>rpm,deb</types>
+                                            <maintainer>jreleaser@kordamp.org</maintainer>
+                                        </linux>
+                                        <windows>
+                                            <types>msi</types>
+                                        </windows>
+                                    </plasmafx-installer>
+                                </jpackage>
                             </assemble>
                             <release>
                                 <github>
@@ -120,7 +154,6 @@
                                     <changelog>
                                         <formatted>ALWAYS</formatted>
                                         <preset>conventional-commits</preset>
-                                        <format>- {{commitShortHash}} {{commitTitle}}</format>
                                         <contributors>
                                             <format>- {{contributorName}}</format>
                                         </contributors>
@@ -131,6 +164,32 @@
                                     </changelog>
                                 </github>
                             </release>
+                            <distributions>
+                                <plasmafx-installer>
+                                    <artifacts>
+                                        <artifact>
+                                            <path>{{jpackageDir}}/PlasmaFX-{{projectVersionNumber}}-osx-x86_64.pkg</path>
+                                            <platform>osx-x86_64</platform>
+                                        </artifact>
+                                        <artifact>
+                                            <path>{{jpackageDir}}/PlasmaFX-{{projectVersionNumber}}-osx-x86_64.dmg</path>
+                                            <platform>osx-x86_64</platform>
+                                        </artifact>
+                                        <artifact>
+                                            <path>{{jpackageDir}}/plasmafx_{{projectVersionNumber}}-1_amd64.deb</path>
+                                            <platform>linux-x86_64</platform>
+                                        </artifact>
+                                        <artifact>
+                                            <path>{{jpackageDir}}/plasmafx-{{projectVersionNumber}}-1.x86_64.rpm</path>
+                                            <platform>linux-x86_64</platform>
+                                        </artifact>
+                                        <artifact>
+                                            <path>{{jpackageDir}}/plasmafx-{{projectVersionNumber}}-windows-x86_64.msi</path>
+                                            <platform>windows-x86_64</platform>
+                                        </artifact>
+                                    </artifacts>
+                                </plasmafx-installer>
+                            </distributions>
                         </jreleaser>
                     </configuration>
                 </plugin>
@@ -158,167 +217,55 @@
         <profile>
             <id>jars</id>
             <build>
+                <defaultGoal>generate-resources</defaultGoal>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
-                        <version>3.2.0</version>
+                        <version>3.5.0</version>
                         <executions>
                             <execution>
                                 <id>universal</id>
                                 <phase>generate-resources</phase>
                                 <goals>
-                                    <goal>copy</goal>
+                                    <goal>copy-dependencies</goal>
                                 </goals>
                                 <configuration>
                                     <outputDirectory>${project.build.directory}/repositories/universal</outputDirectory>
-                                    <artifactItems>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-base</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-graphics</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-controls</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-swing</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>mac</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                    </artifactItems>
+                                    <excludeClassifiers>mac,win,linux</excludeClassifiers>
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>mac</id>
+                                <id>osx</id>
                                 <phase>generate-resources</phase>
                                 <goals>
-                                    <goal>copy</goal>
+                                    <goal>copy-dependencies</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.directory}/repositories/mac</outputDirectory>
-                                    <artifactItems>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-base</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>mac</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-graphics</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>mac</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-controls</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>mac</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-swing</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>mac</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                    </artifactItems>
+                                    <outputDirectory>${project.build.directory}/repositories/osx</outputDirectory>
+                                    <classifier>mac</classifier>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>win</id>
                                 <phase>generate-resources</phase>
                                 <goals>
-                                    <goal>copy</goal>
+                                    <goal>copy-dependencies</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.directory}/repositories/win</outputDirectory>
-                                    <artifactItems>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-base</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>win</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-graphics</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>win</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-controls</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>win</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-swing</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>win</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                    </artifactItems>
+                                    <outputDirectory>${project.build.directory}/repositories/windows</outputDirectory>
+                                    <classifier>win</classifier>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>linux</id>
                                 <phase>generate-resources</phase>
                                 <goals>
-                                    <goal>copy</goal>
+                                    <goal>copy-dependencies</goal>
                                 </goals>
                                 <configuration>
                                     <outputDirectory>${project.build.directory}/repositories/linux</outputDirectory>
-                                    <artifactItems>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-base</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>linux</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-graphics</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>linux</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-controls</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>linux</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.openjfx</groupId>
-                                            <artifactId>javafx-swing</artifactId>
-                                            <version>${javafx.version}</version>
-                                            <classifier>linux</classifier>
-                                            <overWrite>true</overWrite>
-                                        </artifactItem>
-                                    </artifactItems>
+                                    <classifier>linux</classifier>
                                 </configuration>
                             </execution>
                         </executions>
@@ -328,11 +275,9 @@
         </profile>
 
         <profile>
-            <id>assemble</id>
-            <properties>
-                <jreleaser.config.assembly>true</jreleaser.config.assembly>
-            </properties>
+            <id>jdks</id>
             <build>
+                <defaultGoal>generate-resources</defaultGoal>
                 <plugins>
                     <plugin>
                         <groupId>org.jreleaser</groupId>
@@ -360,13 +305,25 @@
                         <executions>
                             <execution>
                                 <id>download-jdks</id>
-                                <phase>package</phase>
+                                <phase>generate-resources</phase>
                                 <goals>
                                     <goal>setup-disco</goal>
                                 </goals>
                             </execution>
                         </executions>
                     </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>assemble</id>
+            <properties>
+                <jreleaser.config.assembly>true</jreleaser.config.assembly>
+            </properties>
+            <build>
+                <defaultGoal>package</defaultGoal>
+                <plugins>
                     <plugin>
                         <groupId>org.jreleaser</groupId>
                         <artifactId>jreleaser-maven-plugin</artifactId>
