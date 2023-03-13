@@ -1,0 +1,54 @@
+name: X-Jlink
+
+on:
+  workflow_call:
+
+jobs:
+  jlink:
+    name: Jlink
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ vars.JAVA_VERSION }}
+          distribution: ${{ vars.JAVA_DISTRO }}
+          cache: maven
+
+      - name: Build
+        shell: bash
+        run: ./mvnw -ntp -B verify
+
+      - name: Dependencies
+        shell: bash
+        run: ./mvnw -ntp -B -Pjars
+
+      - name: Provision JDKS
+        shell: bash
+        run: ./mvnw -ntp -B -Pjdks
+
+      - name: Jlink
+        shell: bash
+        run: ./mvnw -ntp -B -Passemble -Djreleaser.assemblers=jlink
+
+      - name: JReleaser output
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: jreleaser-jlink
+          path: |
+            target/jreleaser/trace.log
+            target/jreleaser/output.properties
+
+      - name: Upload jlink
+        uses: actions/upload-artifact@v3
+        with:
+          retention-days: 1
+          name: jlink
+          path: |
+            target/jreleaser/assemble/plasmafx-jlink/jlink/*.zip

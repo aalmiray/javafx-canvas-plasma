@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+
+jobs:
+  precheck:
+    name: Precheck
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.vars.outputs.VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Version
+        id: vars
+        shell: bash
+        run: |
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          echo ${{ github.event.inputs.version }} > VERSION
+          git add VERSION
+          sed -i -e "s/^\:project-version\:\ .*/:project-version: ${{ github.event.inputs.version }}/g" README.adoc
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "Github Actions"
+          git commit -a -m "Releasing version ${{ github.event.inputs.version }}"
+          git push origin main
+
+  jlink:
+    name: Jlink
+    needs: [precheck]
+    uses: aalmiray/javafx-canvas-plasma/.github/workflows/step-jlink.yml@main
+
+  jpackage:
+    name: JPackage
+    needs: [precheck, jlink]
+    uses: aalmiray/javafx-canvas-plasma/.github/workflows/step-jpackage.yml@main
+
+  release:
+    name: Release
+    needs: [precheck, jlink, jpackage]
+    uses: aalmiray/javafx-canvas-plasma/.github/workflows/step-release.yml@main
+    with:
+      project-version: ${{ needs.precheck.outputs.version }}

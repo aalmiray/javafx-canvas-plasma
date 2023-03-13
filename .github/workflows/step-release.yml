@@ -1,0 +1,55 @@
+name: X-Release
+
+on:
+  workflow_call:
+    inputs:
+      project-version:
+        required: true
+        type: string
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download jlink
+        uses: actions/download-artifact@v3
+        with:
+          name: jlink
+          path: target/jreleaser/assemble/plasmafx-jlink/jlink
+
+      - name: Download jpackage
+        uses: actions/download-artifact@v3
+        with:
+          name: jpackage
+          path: target/jreleaser/assemble/plasmafx-installer/jpackage
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ vars.JAVA_VERSION }}
+          distribution: ${{ vars.JAVA_DISTRO }}
+          cache: maven
+
+      - name: Release
+        shell: bash
+        run: |
+          ./mvnw -ntp -B -Prelease
+        env:
+          JRELEASER_PROJECT_VERSION: ${{ inputs.project-version }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: JReleaser output
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: jreleaser-release
+          path: |
+            target/jreleaser/trace.log
+            target/jreleaser/output.properties

@@ -1,0 +1,31 @@
+name: EarlyAccess
+
+on:
+  push:
+    branches: [ main ]
+  
+jobs:
+  precheck:
+    name: Precheck
+    uses: aalmiray/javafx-canvas-plasma/.github/workflows/step-precheck.yml@main
+    secrets: inherit
+
+  jlink:
+    name: Jlink
+    needs: [precheck]
+    if: endsWith(${{ needs.precheck.outputs.version }}, '-SNAPSHOT')
+    uses: aalmiray/javafx-canvas-plasma/.github/workflows/step-jlink.yml@main
+
+  jpackage:
+    name: JPackage
+    needs: [precheck, jlink]
+    if: endsWith(${{ needs.precheck.outputs.version }}, '-SNAPSHOT')
+    uses: aalmiray/javafx-canvas-plasma/.github/workflows/step-jpackage.yml@main
+
+  release:
+    name: Release
+    needs: [precheck, jlink, jpackage]
+    if: endsWith(${{ needs.precheck.outputs.version }}, '-SNAPSHOT')
+    uses: aalmiray/javafx-canvas-plasma/.github/workflows/step-release.yml@main
+    with:
+      project-version: ${{ needs.precheck.outputs.version }}

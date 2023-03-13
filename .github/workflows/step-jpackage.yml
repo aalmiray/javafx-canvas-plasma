@@ -1,0 +1,60 @@
+name: X-JPackage
+
+on:
+  workflow_call:
+
+jobs:
+  jpackage:
+    name: '${{ matrix.job.os }}'
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { os: ubuntu-latest,  platform: linux-x86_64 }
+          - { os: macOS-latest,   platform: osx-x86_64 }
+          - { os: windows-latest, platform: windows-x86_64 }
+    runs-on: ${{ matrix.job.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ vars.JAVA_VERSION }}
+          distribution: ${{ vars.JAVA_DISTRO }}
+          cache: maven
+
+      - name: Dependencies
+        run: ./mvnw -ntp -B -Pjars
+
+      - name: Provision JDKS
+        run: ./mvnw -ntp -B -Pjdks
+
+      - name: JPackage
+        shell: bash
+        run: mvn -ntp -B -Passemble
+
+      - name: JReleaser output
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: jreleaser-jpackage-${{ runner.os }}
+          path: |
+            target/jreleaser/trace.log
+            target/jreleaser/output.properties
+
+      - name: Upload jpackage
+        uses: actions/upload-artifact@v3
+        with:
+          retention-days: 1
+          name: jpackage
+          path: |
+            target/jreleaser/assemble/plasmafx-installer/jpackage/*.pkg
+            target/jreleaser/assemble/plasmafx-installer/jpackage/*.dmg
+            target/jreleaser/assemble/plasmafx-installer/jpackage/*.msi
+            target/jreleaser/assemble/plasmafx-installer/jpackage/*.exe
+            target/jreleaser/assemble/plasmafx-installer/jpackage/*.deb
+            target/jreleaser/assemble/plasmafx-installer/jpackage/*.rpm

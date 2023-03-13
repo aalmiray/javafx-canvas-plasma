@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>eu.openvalue</groupId>
     <artifactId>javafx-canvas-plasma</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <inceptionYear>2021</inceptionYear>
 
     <properties>
@@ -344,10 +344,20 @@
         <profile>
             <id>release</id>
             <build>
+                <defaultGoal>generate-resources</defaultGoal>
                 <plugins>
                     <plugin>
                         <groupId>org.jreleaser</groupId>
                         <artifactId>jreleaser-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>release</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>full-release</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
