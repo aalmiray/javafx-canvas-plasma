@@ -33,6 +33,15 @@ jobs:
       - name: Provision JDKS
         run: ./mvnw -ntp -B -Pjdks
 
+      - name: Jars
+        shell: bash
+        run: |
+          ls -l target/repositories
+          ls -l target/repositories/universal
+          ls -l target/repositories/linux
+          ls -l target/repositories/osx
+          ls -l target/repositories/windows
+        
       - name: JPackage
         shell: bash
         run: mvn -ntp -B -Passemble

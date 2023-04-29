@@ -14,7 +14,7 @@
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <jreleaser-plugin.version>1.5.1</jreleaser-plugin.version>
+        <jreleaser-plugin.version>1.6.0</jreleaser-plugin.version>
         <application.main.module>eu.openvalue</application.main.module>
         <application.main.class>${application.main.module}.PlasmaApp</application.main.class>
     </properties>
